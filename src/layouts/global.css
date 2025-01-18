@@ -1,0 +1,95 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Secular One", sans-serif;
+}
+
+:root {
+    --black: #070707;
+    --robin-egg-blue: #07d6daff;
+    --pomp-and-power: #a06b9aff;
+    --cosmic-latte: #fff8e8ff;
+    --princeton-orange: #fa900fff;
+    --cornell-red: #ba1b1dff;
+    --sunglow: #ffd23fff;
+    --champagne-pink: #ebd2beff;
+    --lavender-blush: #f0e6efff;
+}
+
+a {
+    color: var(--cornell-red);
+}
+
+a:hover {
+    color: var(--princeton-orange);
+}
+
+html {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    font-size: 18px;
+    background-color: var(--cosmic-latte);
+    background-image:
+            linear-gradient(var(--black) .1em, transparent .1em),
+            linear-gradient(90deg, var(--black) .1em, transparent .1em);
+    background-size: 3rem 3rem;
+}
+
+h1 {
+    font-size: 4rem;
+    line-height: 4rem;
+    color: var(--pomp-and-power);
+    text-shadow: 0.25rem 0.25rem var(--black);
+}
+
+h2 {
+    font-size: 2.5rem;
+    line-height: 2.5rem;
+    color: var(--sunglow);
+    text-shadow: 0.2rem 0.2rem var(--black);
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: var(--robin-egg-blue);
+    text-shadow: 0.15rem 0.15rem var(--black);
+}
+
+h4 {
+    font-size: 1.15rem;
+    color: var(--princeton-orange);
+    text-shadow: 0.1rem 0.1rem var(--black);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Rammetto One", sans-serif;
+}
+
+button {
+    border: 2px solid var(--black);
+    box-shadow: 0.25rem 0.25rem var(--black);
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+}
+
+button.blue {
+    background-color: var(--robin-egg-blue);
+}
+button.blue:hover {
+    background-color: #06C3C6;
+}
+button.blue:active {
+    background-color: #059C9E;
+}
+
+.popout {
+    padding: 0.5rem;
+    border: 2px solid var(--black);
+    box-shadow: 0.25rem 0.25rem var(--black);
+}
+.outputvid {
+    width: 100%;
+}

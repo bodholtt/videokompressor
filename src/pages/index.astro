@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Compressor from '../components/Compressor.astro';
+---
+<Layout>
+	<main>
+		<Compressor/>
+		<section class="popout">
+			<h2>About</h2>
+			<p>VideoKompressor is a web-based video compression utility. It uses <a href="https://ffmpegwasm.netlify.app/">ffmpeg.wasm</a> to convert and compress videos.</p>
+			<p>This was created for use with sharing platforms that limit file size such as Discord.</p>
+			<br>
+			<p>VideoKompressor will produce a file that is no larger than the target size.</p>
+		</section>
+	</main>
+</Layout>
+
+<style>
+	main {
+		display: flex;
+		gap: 1rem;
+		flex-direction: column;
+	}
+	section {
+		background-color: var(--lavender-blush);
+	}
+</style>

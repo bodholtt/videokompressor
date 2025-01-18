@@ -1,0 +1,153 @@
+---
+
+---
+<article id="compressor-article">
+    <h3>Upload a video to compress it below the specified size</h3>
+
+    <div class="twocol">
+        <section>
+            <input type="file" id="uploader" accept="video/*"/>
+            <div style="display: flex; flex-direction: row; gap: 1rem;">
+                <label for="sizetarget">Target Size:</label>
+                <input type="number" name="sizetarget" id="sizetarget" value="10"/>
+                <p>MB</p>
+            </div>
+            <button class="blue" id="submit">Compress!</button>
+            <p id="math"></p>
+            <p id="message"></p>
+        </section>
+        <aside class="popout">
+            <h4>FFmpeg Logs:</h4>
+            <textarea id="ffmpeglog"></textarea>
+        </aside>
+    </div>
+</article>
+
+<style>
+    .twocol {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    aside {
+        background-color: var(--champagne-pink);
+    }
+    aside > textarea {
+        width: 100%;
+        height: 12rem;
+        font-size: 0.75rem;
+        resize: none;
+    }
+    section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+    #message {
+        color: var(--cornell-red);
+        font-weight: bolder;
+    }
+    article {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+</style>
+
+<script>
+    import {FFmpeg} from "@ffmpeg/ffmpeg";
+    import {toBlobURL} from "@ffmpeg/util";
+
+    const messageElement = document.getElementById("message") as HTMLParagraphElement;
+    const mathElement = document.getElementById("math") as HTMLParagraphElement;
+    const logElement = document.getElementById("ffmpeglog") as HTMLTextAreaElement;
+    const sizetargetElement = document.getElementById("sizetarget") as HTMLInputElement;
+    const uploader = document.getElementById("uploader") as HTMLInputElement;
+    const submit = document.getElementById("submit") as HTMLButtonElement;
+    const article = document.getElementById("compressor-article")!;
+
+    const baseURL = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm';
+    const ffmpeg = new FFmpeg();
+    ffmpeg.on('log', ({ message }) => {
+        logElement.value = logElement.value + message + '\n';
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(message);
+    });
+    await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+    });
+
+    const loadsource = async (sourcefile: File): Promise<number> => {
+        return new Promise(async (resolve, reject) => {
+            const sourcevideo = document.createElement('video');
+            sourcevideo.preload = 'metadata';
+            sourcevideo.src = URL.createObjectURL(sourcefile);
+            sourcevideo.onloadedmetadata = function() {
+                window.URL.revokeObjectURL(sourcevideo.src);
+                resolve(sourcevideo.duration);
+            }
+            sourcevideo.onerror = function () {
+                reject(new Error('Failed to load video metadata.'));
+            };
+        });
+    }
+
+    const transcode = async () => {
+        logElement.value = "";
+        if (ffmpeg === null) {
+            messageElement.innerText = "FFmpeg failed to initalize (check console)";
+            return;
+        }
+        if (uploader.files == undefined || uploader.files.length === 0) {
+            messageElement.innerText = "Please upload a file";
+            return;
+        }
+        const sizetarget = parseInt(sizetargetElement.value) * 8000000; // in bits
+        const sourcefile = uploader.files[0];
+
+        await loadsource(sourcefile).then(async (duration) => {
+            const sourceBitrate = ((sourcefile.size * 8) / duration); // bits/sec
+            // required size = bitrate * length
+            // sizetarget / length = bitrate?
+            const outBitrate = Math.floor(sizetarget / duration); // bits/sec
+            mathElement.innerText = `Bitrate: ${(sourceBitrate / 1000).toFixed(3)} kbps to convert to ${Math.floor(outBitrate / 1000)} kbps`;
+
+            const arr = new Uint8Array(await (uploader.files[0].arrayBuffer()));
+            await ffmpeg.writeFile('input.mp4', arr);
+
+            await ffmpeg.exec([
+                '-i', 'input.mp4',
+                '-vcodec', 'libx265',
+                '-crf', '23',
+                '-movflags', '+faststart',
+                '-preset', 'medium',
+                '-acodec', 'aac',
+                '-b:a', '128k',
+                '-maxrate', `${Math.floor(outBitrate / 1000)}k`,
+                '-bufsize', `${Math.floor(outBitrate / 1000)}k`,
+                'output.mp4'
+            ]);
+            const out = await ffmpeg.readFile('output.mp4');
+
+            const outElement = document.createElement("video");
+            outElement.setAttribute("id", "output");
+            outElement.setAttribute("controls", "controls");
+            outElement.setAttribute("class", "outputvid popout");
+            outElement.src = URL.createObjectURL(new Blob([out], {type: 'video/mp4'}));
+            article.appendChild(outElement);
+        });
+
+    };
+
+    submit.addEventListener("click", async (e) => {
+        e.preventDefault();
+        console.log("hit");
+        await transcode();
+    });
+
+    console.log(window.crossOriginIsolated);
+</script>
+
